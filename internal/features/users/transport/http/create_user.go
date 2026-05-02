@@ -3,6 +3,8 @@ package users_transport_http
 import (
 	"encoding/json"
 	"net/http"
+
+	core_logger "github.com/turtlesafik-beep/GolangToDO/internal/core/logger"
 )
 
 type CreateUserRequest struct {
@@ -17,9 +19,16 @@ type CreateUserResponse struct {
 	PhoneNumber *string `json:"phone_number"`
 }
 
-func (h *UsersHTTPHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
+func (h *UsersHTTPHandler) CreateUser(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := core_logger.FromContext(ctx)
+
+	log.Debug("invoKe CreateUser handler")
+
 	var request CreateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 
 	}
+
+	rw.WriteHeader(http.StatusOK)
 }
