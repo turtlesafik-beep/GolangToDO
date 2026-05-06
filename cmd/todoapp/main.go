@@ -51,5 +51,4 @@ func main() {
 		logger.Error("HTTP server run error", zap.Error(err))
 	}
 
-	fmt.Println("streak")
 }
