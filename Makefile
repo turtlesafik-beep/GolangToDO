@@ -1,11 +1,10 @@
 include .env
 export
 
-export UID := $(shell id -u)
-export GID := $(shell id -g)
-
 export PROJECT_ROOT=$(shell pwd)
 
+export UID := $(shell id -u)
+export GID := $(shell id -g)
 
 env-up:
 	@docker compose up -d todoapp-postgres
@@ -59,5 +58,4 @@ migrate-action:
 todoapp-run:
 	@export LOGGER_FOLDER=${PROJECT_ROOT}/out/logs && \
 	export POSTGRES_HOST=localhost && \
-	go mod tidy && \
 	go run cmd/todoapp/main.go
