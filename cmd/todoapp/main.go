@@ -63,4 +63,5 @@ func main() {
 	if err := httpServer.Run(ctx); err != nil {
 		logger.Error("HTTP server run error", zap.Error(err))
 	}
+
 }
