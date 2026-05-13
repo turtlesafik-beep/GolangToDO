@@ -11,19 +11,19 @@ import (
 	"go.uber.org/zap"
 )
 
-type HTTPResponseHamdler struct {
+type HTTPResponseHandler struct {
 	log *core_logger.Logger
 	rw  http.ResponseWriter
 }
 
-func NewHTTPResponseHandler(log *core_logger.Logger, rw http.ResponseWriter) *HTTPResponseHamdler {
-	return &HTTPResponseHamdler{
+func NewHTTPResponseHandler(log *core_logger.Logger, rw http.ResponseWriter) *HTTPResponseHandler {
+	return &HTTPResponseHandler{
 		log: log,
 		rw:  rw,
 	}
 }
 
-func (h *HTTPResponseHamdler) JSONResponse(
+func (h *HTTPResponseHandler) JSONResponse(
 	responseBody any,
 	statusCode int,
 ) {
@@ -34,7 +34,11 @@ func (h *HTTPResponseHamdler) JSONResponse(
 	}
 }
 
-func (h *HTTPResponseHamdler) ErrorResponse(err error, msg string) {
+func (h *HTTPResponseHandler) NoContentResponse() {
+	h.rw.WriteHeader(http.StatusNoContent)
+}
+
+func (h *HTTPResponseHandler) ErrorResponse(err error, msg string) {
 	var (
 		statusCode int
 		logFunc    func(string, ...zap.Field)
@@ -67,7 +71,7 @@ func (h *HTTPResponseHamdler) ErrorResponse(err error, msg string) {
 	)
 }
 
-func (h *HTTPResponseHamdler) PanicResponse(p any, msg string) {
+func (h *HTTPResponseHandler) PanicResponse(p any, msg string) {
 	statusCode := http.StatusInternalServerError
 	err := fmt.Errorf("unexpected panic: %v", p)
 
@@ -79,7 +83,7 @@ func (h *HTTPResponseHamdler) PanicResponse(p any, msg string) {
 	)
 }
 
-func (h *HTTPResponseHamdler) errorResponse(
+func (h *HTTPResponseHandler) errorResponse(
 	statusCode int,
 	err error,
 	msg string,
