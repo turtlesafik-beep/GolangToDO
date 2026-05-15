@@ -3,23 +3,67 @@ package users_transport_http
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
+	"github.com/turtlesafik-beep/GolangToDO/internal/core/domain"
 	core_logger "github.com/turtlesafik-beep/GolangToDO/internal/core/logger"
 	core_http_request "github.com/turtlesafik-beep/GolangToDO/internal/core/transport/http/request"
 	core_http_response "github.com/turtlesafik-beep/GolangToDO/internal/core/transport/http/response"
+	core_http_types "github.com/turtlesafik-beep/GolangToDO/internal/core/transport/http/types"
+	core_http_utils "github.com/turtlesafik-beep/GolangToDO/internal/core/transport/http/utils"
 )
 
-type PathUserRequest struct {
-	FullName    string `json:"full_name"`
-	PhoneNumber string `json:"phone_number"`
+type PatchUserRequest struct {
+	FullName    core_http_types.Nullable[string] `json:"full_name"`
+	PhoneNumber core_http_types.Nullable[string] `json:"phone_number"`
 }
+
+func (r *PatchUserRequest) Validate() error {
+	if r.FullName.Set {
+		if r.FullName.Value == nil {
+			return fmt.Errorf("FullName can't be null")
+		}
+
+		fullNameLen := len([]rune(*r.FullName.Value))
+		if fullNameLen < 3 || fullNameLen > 100 {
+			return fmt.Errorf("`FullName` must be between 3 and 100 symbols")
+		}
+	}
+
+	if r.PhoneNumber.Set {
+		if r.PhoneNumber.Value != nil {
+			phoneNumberLen := len([]rune(*r.PhoneNumber.Value))
+			if phoneNumberLen < 10 || phoneNumberLen > 15 {
+				return fmt.Errorf("`PhoneNumber` must be between 10 and 15 symbols")
+			}
+
+			if !strings.HasPrefix(*r.PhoneNumber.Value, "+") {
+				return fmt.Errorf("`PhoneNumber` must startswith '+' symbol")
+			}
+		}
+	}
+
+	return nil
+}
+
+type PatchUserResponse UserDTOResponse
 
 func (h *UsersHTTPHandler) PathUser(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)
 	responseHandler := core_http_response.NewHTTPResponseHandler(log, rw)
 
-	var request PathUserRequest
+	userID, err := core_http_utils.GetIntPathValue(r, "id")
+	if err != nil {
+		responseHandler.ErrorResponse(
+			err,
+			"failed to get userID path value",
+		)
+
+		return
+	}
+
+	var request PatchUserRequest
 	if err := core_http_request.DecodeAndValidate(r, &request); err != nil {
 		responseHandler.ErrorResponse(
 			err,
@@ -29,13 +73,26 @@ func (h *UsersHTTPHandler) PathUser(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Debug(
-		fmt.Sprintf(
-			"PathUserRequest fields:\nFullName: '%s'\nPhoneNumber: '%s'",
-			request.FullName,
-			request.PhoneNumber,
-		),
-	)
+	userPatch := userPathFromRequest(request)
 
-	rw.WriteHeader(http.StatusOK)
+	userDomain, err := h.usersService.PatchUser(ctx, userID, userPatch)
+	if err != nil {
+		responseHandler.ErrorResponse(
+			err,
+			"failed to patch user",
+		)
+
+		return
+	}
+
+	response := PatchUserResponse(userDTOFromDomain(userDomain))
+
+	responseHandler.JSONResponse(response, http.StatusOK)
+}
+
+func userPathFromRequest(request PatchUserRequest) domain.UserPath {
+	return domain.UserPath{
+		FullName:    request.FullName.ToDomain(),
+		PhoneNumber: request.FullName.ToDomain(),
+	}
 }
