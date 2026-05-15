@@ -93,6 +93,6 @@ func (h *UsersHTTPHandler) PathUser(rw http.ResponseWriter, r *http.Request) {
 func userPathFromRequest(request PatchUserRequest) domain.UserPath {
 	return domain.UserPath{
 		FullName:    request.FullName.ToDomain(),
-		PhoneNumber: request.FullName.ToDomain(),
+		PhoneNumber: request.PhoneNumber.ToDomain(),
 	}
 }
