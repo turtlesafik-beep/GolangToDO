@@ -64,5 +64,5 @@ func main() {
 		logger.Error("HTTP server run error", zap.Error(err))
 	}
 
-	fmt.Println("save")
+	fmt.Println("save 2")
 }
